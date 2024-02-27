@@ -1265,4 +1265,23 @@ mod tests {
         let children = query.get(&world, parent).unwrap();
         assert_eq!(**children, [child]);
     }
+
+    #[test]
+    fn spawn_batch_children() {
+        let mut world = World::new();
+        let mut queue = CommandQueue::default();
+        let child_iter = (0..10).map(|_| ());
+        let parent = world.spawn_empty().id();
+
+        // add children to parent
+        {
+            let mut commands = Commands::new(&mut queue, &world);
+
+            commands
+                .entity(parent)
+                .with_children(|p| p.spawn_batch(child_iter));
+        }
+
+        assert_eq!(world.get::<Children>(parent).unwrap().len(), 10);
+    }
 }
