@@ -203,9 +203,9 @@ impl Command for PushChildren {
     }
 }
 
-/// A [`Command`] that consumes an iterator of [`Bundle`]s to spawn a series of entities.
+/// A [`Command`] that consumes an iterator of [`Bundle`]s to spawn a series of entities and makes them child of an entity.
 ///
-/// This is more efficient than spawning the entities individually.
+/// This is more efficient than spawning the children individually.
 fn spawn_batch_children<I, B>(bundles: I, parent: Entity) -> impl Command
 where
     I: IntoIterator<Item = B> + Send + Sync + 'static,
@@ -310,7 +310,10 @@ impl ChildBuilder<'_> {
         e
     }
 
-    /// Spawn a batch of children
+    /// Pushes a [`Command`] to the queue for creating children with the same [`Bundle`] type.
+    /// `bundles_iter` is of a type that can be converted an iterator over [`Bundle`]s.
+    /// This is function is equivalent to calling [`spawn`](Self::spawn) on every element of `bundles_iter`.
+    /// However it is faster due to pre-allocation.
     pub fn spawn_batch<I>(&mut self, bundles_iter: I)
     where
         I: IntoIterator + Send + Sync + 'static,
