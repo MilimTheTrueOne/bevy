@@ -203,6 +203,20 @@ impl Command for PushChildren {
     }
 }
 
+/// A [`Command`] that consumes an iterator of [`Bundle`]s to spawn a series of entities.
+///
+/// This is more efficient than spawning the entities individually.
+fn spawn_batch_children<I, B>(bundles: I, parent: Entity) -> impl Command
+where
+    I: IntoIterator<Item = B> + Send + Sync + 'static,
+    B: Bundle,
+{
+    move |world: &mut World| {
+        let children = world.spawn_batch(bundles).collect::<Vec<Entity>>();
+        world.entity_mut(parent).push_children(&children);
+    }
+}
+
 /// Command that removes children from an entity, and removes these children's parent.
 pub struct RemoveChildren {
     parent: Entity,
@@ -294,6 +308,16 @@ impl ChildBuilder<'_> {
         let e = self.commands.spawn_empty();
         self.push_children.children.push(e.id());
         e
+    }
+
+    /// Spawn a batch of children
+    pub fn spawn_batch<I>(&mut self, bundles_iter: I)
+    where
+        I: IntoIterator + Send + Sync + 'static,
+        I::Item: Bundle,
+    {
+        self.commands
+            .add(spawn_batch_children(bundles_iter, self.parent_entity()));
     }
 
     /// Returns the parent entity of this [`ChildBuilder`].
